@@ -1,0 +1,10 @@
+{
+  "name": "livechess",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+  },
+  "keywords": ["chess","livechess"],
+  "author": "naren magar <narenmagarz98@gmail.com>",
+  "license": "ISC"
+}
