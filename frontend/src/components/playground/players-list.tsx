@@ -1,22 +1,35 @@
 import { List, ListItem, ListItemText,Container,
       Grid, Paper, Button, Box } from "@mui/material"
-import { useContext } from "react"
+import { useContext, useState } from "react"
+import { PlayerEmitterContext } from "."
 import { socketContext } from "../../app"
-
 type t = {
-     players:IPlayers[]
+     players:IPlayer[],
+     you:IPlayer|null
 }
 function PlayerLists({
-     players
+     players,
+     you
 }:t){
 
      const socket = useContext(socketContext)
+     const playerEmitter = useContext(PlayerEmitterContext)
+     const [matchState,setMatchState] = useState<TMatchState>('idle')
+     function handleMatch(){
+          setMatchState('matching')
+     }
+     function handleMatchRequest(player:IPlayer){
+          playerEmitter?.friendlyMatchRequest(player)
+     }
+     function handleRandomMatchRequest(player:IPlayer){
+
+     }
      return(
           <Grid item>
                <List>
                     {
                          players.map(({
-                              name,
+                              username,
                               id,
                               state
                          },i)=>(
@@ -31,8 +44,26 @@ function PlayerLists({
                                         padding:1
                                    }}
                                    >
-                                        {name}
-                                        &nbsp;(state)
+                                        {username}&nbsp;
+                                        {
+                                             state !== 'idle' ? `(${state})`:
+                                             you?.id === id ? 
+                                             <span
+                                             className="fc-red fw-bold"
+                                             >
+                                                  (you)
+                                             </span>
+                                             :
+                                             <button 
+                                             onClick={()=>handleMatchRequest({
+                                                  id,
+                                                  username,
+                                                  state
+                                             })}
+                                             className="play-btn">
+                                                  play
+                                             </button>
+                                        }
                                    </Paper>
                               </ListItem>
                          ))
@@ -43,16 +74,14 @@ function PlayerLists({
                     alignItems='center'
                     sx={{boxShadow:'none'}}
                     >
-                         <Button
-                         onClick={()=>socket.emit('match-game',{
-                              player:'naren magar',
-                              id:123
-                         })}
-                         variant="contained"
-                         color='primary'
+                         <button
+                         onClick={handleMatch}
                          >
-                              Match
-                         </Button>
+                              {
+                                   matchState === 'idle' ? 'match' : 
+                                   matchState === 'matching' ? 'matching...' : 'playing'
+                              }
+                         </button>
                     </Box>
                </List>
           </Grid>
