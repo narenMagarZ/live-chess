@@ -1,22 +1,27 @@
 import { Container, Grid, Paper, Alert, Snackbar } from "@mui/material"
-import { useContext, useEffect, useState } from "react"
+import { createContext, useEffect, useState } from "react"
 import Board from "../board"
 import Match from "./match"
 import Player from "./player"
-import { socketContext } from "../../app"
 import PlayerLists from "./players-list"
 import Emitter from "../../sockets/emitter"
 import Events from "../../sockets/events"
+import PlayerEmitter from "../../sockets/player-emitter"
+import socket from "../../sockets"
+import { Socket } from "socket.io-client"
+export const PlayerEmitterContext = createContext<PlayerEmitter|null>(null)
+export const SocketContext = createContext<Socket>(socket)
+
+const event = new Events(socket)
+const emitter = new Emitter(socket)
 function Playground(){
-     const socket = useContext(socketContext)
      const [players,setPlayers] = useState<IPlayer[]>([])
      const [you,setYou] = useState<IPlayer|null>(null)
      const [alertMessage,setAlertMessage] = useState('')
      const [alertBoxState,setAlertBoxState] = useState(false)
      const [player,setPlayer] = useState<Player|null>(null)
-     const [emitter,setEmitter] = useState<Emitter|null>()
-     const [event,setEvent] = useState<Events|null>()
-     event?.error((data)=>{
+     const [playerEmitter,setPlayerEmitter] = useState<PlayerEmitter|null>(null)
+     event.error((data)=>{
           const {
                message,
                type
@@ -30,8 +35,8 @@ function Playground(){
      })=>{
           setPlayers(data.players)
      })
+     console.count('render count')
      socket.on('createPlayer',(playerInfo)=>{
-          console.log(playerInfo,'playerInfo')
           const {
                you,
                players
@@ -61,18 +66,28 @@ function Playground(){
           setAlertMessage('')
      }
      useEffect(()=>{
-          setEmitter(new Emitter(socket))
-          setEvent(new Events(socket))
-     },[socket])
+          if(player){
+               setPlayerEmitter(new PlayerEmitter(player,socket))
+          }
+     },[player])
      useEffect(()=>{
           if(username)
-          emitter?.createPlayer(username)
-     },[username,emitter])
+          emitter.createPlayer(username)
+     },[username])
      useEffect(()=>{
           if(!username)
           askForUsername()
      },[])
+     useEffect(()=>{
+          console.log('attaching listeneres')
+          event.matchRequest()
+          return()=>{
+               console.log('removing listenerers')
+               event.removeALlListener()
+          }
+     })
      return (
+          <SocketContext.Provider value={socket}>
           <Container
           style={{
                height:'100vh'
@@ -112,12 +127,18 @@ function Playground(){
                sx={{
                }}
                >
-                    <PlayerLists 
-                    you={you}
-                    players={players} />
-                    <Board/>
+                    <PlayerEmitterContext.Provider
+                    value={playerEmitter}
+                    >                         
+                         <PlayerLists 
+                         you={you}
+                         players={players} />
+                         <Board/>
+                    </PlayerEmitterContext.Provider>
                </Grid>
           </Container>
+          </SocketContext.Provider>
+
      )
 }
 
