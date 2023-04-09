@@ -1,5 +1,5 @@
-import { Container, Grid, Paper, Alert, Snackbar } from "@mui/material"
-import { createContext, useEffect, useState } from "react"
+import { Container, Grid } from "@mui/material"
+import { createContext, useEffect, useReducer, useState } from "react"
 import Board from "../board"
 import Match from "./match"
 import Player from "./player"
@@ -9,31 +9,54 @@ import Events from "../../sockets/events"
 import PlayerEmitter from "../../sockets/player-emitter"
 import socket from "../../sockets"
 import { Socket } from "socket.io-client"
-export const PlayerEmitterContext = createContext<PlayerEmitter|null>(null)
-export const SocketContext = createContext<Socket>(socket)
-
+import AlertBox from "../alertbox"
 const event = new Events(socket)
 const emitter = new Emitter(socket)
+export const PlayerEmitterContext = createContext<PlayerEmitter|null>(null)
+export const SocketContext = createContext<Socket>(socket)
+export const EventContext = createContext<Events|null>(null)
 function Playground(){
-     const [players,setPlayers] = useState<IPlayer[]>([])
-     const [you,setYou] = useState<IPlayer|null>(null)
+     const [state,dispatch] = useReducer((state:IPlaygroundState,action:{
+          type:string,
+          payload:any
+     })=>{
+          const {type,payload} = action
+          if(type==='PLAYERS'){
+               return {
+                    ...state,
+                    players:payload
+               }
+          }
+          else if(type === 'YOU'){
+               return {
+                    ...state,
+                    you:payload
+               }
+          }
+          else if(type==='PLAYERS_AND_YOU'){
+               return {
+                    you:payload.you,
+                    players:payload.players
+               }
+          }
+          else return state
+     },{
+          players:[],
+          you:null,
+     })
      const [alertMessage,setAlertMessage] = useState('')
-     const [alertBoxState,setAlertBoxState] = useState(false)
      const [player,setPlayer] = useState<Player|null>(null)
      const [playerEmitter,setPlayerEmitter] = useState<PlayerEmitter|null>(null)
-     event.error((data)=>{
-          const {
-               message,
-               type
-          } = data
-          console.log(data,'this is data')
-          setAlertBoxState(true)
-          setAlertMessage(message)
-     })
-     event?.playerList((data:{
+     const [username,setUsername] = useState('')
+
+
+     event.playerList((data:{
           players:IPlayer[]
      })=>{
-          setPlayers(data.players)
+          dispatch({
+               type:'PLAYERS',
+               payload:data.players
+          })
      })
      console.count('render count')
      socket.on('createPlayer',(playerInfo)=>{
@@ -46,11 +69,16 @@ function Playground(){
                username
           } = you
           setPlayer(new Player(id,username))
-          setPlayers(players)
-          setYou(you)
+          dispatch({
+               type:'PLAYERS_AND_YOU',
+               payload:{
+                    players,
+                    you
+               },
+
+          })
      })
 
-     const [username,setUsername] = useState('')
      function askForUsername(){
           const promptValue = prompt('Enter username...')
           if(!promptValue){
@@ -59,11 +87,6 @@ function Playground(){
           else {
                setUsername(promptValue)
           }
-     }
-
-     function handleAlertBoxClose(){
-          setAlertBoxState(false)
-          setAlertMessage('')
      }
      useEffect(()=>{
           if(player){
@@ -79,64 +102,47 @@ function Playground(){
           askForUsername()
      },[])
      useEffect(()=>{
-          console.log('attaching listeneres')
           event.matchRequest()
           return()=>{
-               console.log('removing listenerers')
                event.removeALlListener()
           }
      })
      return (
           <SocketContext.Provider value={socket}>
-          <Container
-          style={{
-               height:'100vh'
-          }}
-          maxWidth='lg'
-          >
-               <Paper
-               sx={{
-                    boxShadow:'none',
-               }}
+               <EventContext.Provider
+               value={event}
                >
-                    {
-                         alertMessage && <Snackbar open={alertBoxState} autoHideDuration={6000} >
-                         <Alert severity="error" 
-                         onClose={handleAlertBoxClose}
-                         sx={{ width: '100%' }}>
-                           {alertMessage}
-                         </Alert>
-                       </Snackbar>
-                    }
-               </Paper>               
 
-               <Grid
-               container
-               justifyContent='center'
-               alignItems='center'
-               sx={{
-                    marginBottom:2,
-                    marginTop:5
-               }}
-               >
-               </Grid>
-               <Grid
-               container
-               spacing={2}
-               justifyContent='center'
-               sx={{
-               }}
-               >
-                    <PlayerEmitterContext.Provider
-                    value={playerEmitter}
-                    >                         
-                         <PlayerLists 
-                         you={you}
-                         players={players} />
-                         <Board/>
-                    </PlayerEmitterContext.Provider>
-               </Grid>
-          </Container>
+                    <Container
+                    style={{
+                         height:'100vh',
+                         justifyContent:'center',
+                         alignItems:'center',
+                         display:'flex'
+
+                    }}
+                    maxWidth='lg'
+                    >
+                         <AlertBox
+                         />
+                         <Grid
+                         container
+                         spacing={2}
+                         justifyContent='center'
+                         sx={{
+                         }}
+                         >
+                              <PlayerEmitterContext.Provider
+                              value={playerEmitter}
+                              >                         
+                                   <PlayerLists 
+                                   you={state.you}
+                                   players={state.players} />
+                                   <Board/>
+                              </PlayerEmitterContext.Provider>
+                         </Grid>
+                    </Container>
+               </EventContext.Provider>
           </SocketContext.Provider>
 
      )
