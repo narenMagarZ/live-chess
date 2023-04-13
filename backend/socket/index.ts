@@ -1,24 +1,32 @@
 import {Server, Socket} from 'socket.io'
-import Player from '../model/player';
-import PlayerList from '../model/player-list';
-import generatePlayerId from '../utils/generate-player-id';
+import MatchEvent from './match-event';
+import Players from '../model/player-list';
 import Events from './events';
+import PlayerEvent from './player-event';
+import Matches from '../model/matches';
 
 class SocketManager {
      io:Server;
-     players:PlayerList
+     players:Players
      constructor(io:Server){
           this.io = io
-          this.players = new PlayerList()
+          this.players = new Players()
      }
-     public connect(socket:Socket){
-          const playerId = generatePlayerId()
-          const player = new Player(playerId)
-          socket.join(playerId)
-          socket.emit('player-list',[...this.players.getPlayers()])
-          const event = new Events(socket,player,this.players)
-          event.setPlayerName()
-          event.disconnect()
+     public connect(socket:Socket,matches:Matches){
+          const event = new Events(socket,this.players,this.io)
+          event.createPlayer((player,players)=>{
+               const playerEvent = new PlayerEvent(player,socket,players,this.io)
+               playerEvent.friendlyMatchRequest()
+               playerEvent.acceptMatchRequest(matches,(match,player1Socket)=>{
+                    const player1MatchEvent = new MatchEvent(player1Socket,players,this.io,match)
+                    const player2MatchEvent = new MatchEvent(socket,players,this.io,match)
+                    player1MatchEvent.movePiece()
+                    player2MatchEvent.movePiece()
+               })
+               playerEvent.rejectMatchRequest()
+               playerEvent.cancelMatchRequest()
+               playerEvent.noMatchRequestResponse()
+          })
      }
 }
 export default SocketManager
