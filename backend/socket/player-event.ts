@@ -51,7 +51,7 @@ class PlayerEvent extends Events{
                this.socket.to(requestedBy).emit('rejectMatchRequest',{id:this.player.playerId})
           })
      }
-     public acceptMatchRequest(matches:Matches,cb:(match:Match,player1Socket:Socket)=>void){
+     public acceptMatchRequest(matches:Matches,cb:(match:Match,player1:Player,player2:Player,player1Socket:Socket)=>void){
           this.socket.on('acceptMatchRequest',(data)=>{
                const {requestedBy} = data
                const matchId = u.generateId()
@@ -78,7 +78,7 @@ class PlayerEvent extends Events{
                     if(player1Socket){
                          player1Socket.join(matchId)
                          this.socket.join(matchId)
-                         cb(match,player1Socket)
+                         cb(match,player1,player2,player1Socket)
                          const data={
                               id1:player1.playerId,
                               id2:player2.playerId
@@ -86,12 +86,26 @@ class PlayerEvent extends Events{
                          player1Socket.emit('acceptMatchRequest',{id:player2.playerId})
                          this.io.to(matchId).emit('startMatchTimer')
                          this.io.to(matchId).emit('startMatch',data)
-                         player1Socket.emit('movePiece')
+                         player1Socket.emit('movePiece',{
+                              movementTurn:'player1'
+                         })
+                         const playersOnMatch = [
+                              {
+                                   username:player1.username,
+                                   type:'player1'
+                              },
+                              {
+                                   username:player2.username,
+                                   type:'player2'
+                              }
+                         ]
                          this.socket.emit('matchInfo',{
-                              opponent:player1.username
+                              you:playersOnMatch[1],
+                              opponent:playersOnMatch[0]
                          })
                          player1Socket.emit('matchInfo',{
-                              opponent:player2.username
+                              you:playersOnMatch[0],
+                              opponent:playersOnMatch[1]
                          })
                     }
           })
