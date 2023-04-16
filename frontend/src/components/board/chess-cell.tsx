@@ -7,6 +7,7 @@ function ChessCell({
 
      return(
           <Paper
+          id='piece'
           data-pos={`${cellProps.position.x}-${cellProps.position.y}`}
           onClick={onClick}
           sx={{
@@ -14,7 +15,8 @@ function ChessCell({
                height:80,
                width:80,
                borderRadius:0,
-               cursor:'pointer'
+               cursor:'pointer',
+               opacity:cellProps.isHighLighted?0.5:1
           }}
           >
                <Grid
