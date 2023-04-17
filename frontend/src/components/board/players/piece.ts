@@ -1,8 +1,8 @@
 
 
 class Piece{
-     public lowerBound:number
-     public upperBound:number
+     lowerBound:number
+     upperBound:number
      possibleMoves:TPossibleMoves
      pieces:TPieces
      constructor(pieces:TPieces){
@@ -29,7 +29,10 @@ class Piece{
           return this.pieces
      }
 
-
+     checkIfMoveIsValid(newPos:[number,number]){
+          const[x,y]=newPos
+          return this.possibleMoves.some((move)=>move[0]===x&&move[1]===y)
+     }
 }
 
 export default Piece
