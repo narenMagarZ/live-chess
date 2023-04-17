@@ -15,12 +15,12 @@ class Knight extends Piece{
                               const Y = y-z
                               if((X>=this.lowerBound && X<=this.upperBound)&&(Y>=this.lowerBound && Y<=this.upperBound)){
                                    const piece = this.pieces[X][Y]
-                                   if(piece.player){
-                                        if(piece.type==='remote'){
-                                                  this.possibleMoves.push([X,Y])
-                                        }
+                                   
+                                   if(piece.player && piece.type ==='remote'){
+                                        this.possibleMoves.push([X,Y])
                                    }
-                                   else this.possibleMoves.push([X,Y])
+                                   else if(!piece.player) 
+                                   this.possibleMoves.push([X,Y])
                               }
                          }
                     }
