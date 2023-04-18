@@ -26,6 +26,12 @@ class Events {
      acceptMatchRequest(cb:(data:any)=>void){
           this.socket.on('acceptMatchRequest',cb)
      }
+     updatePlayerList(cb:(data:any)=>void){
+          this.socket.on('updatePlayerList',cb)
+     }
+     removeUpdatePlayerList(){
+          this.socket.removeAllListeners('updatePlayerList')
+     }
      removeAcceptMatchRequest(){
           this.socket.removeAllListeners('acceptMatchRequest')
      }
@@ -41,17 +47,24 @@ class Events {
      public removeCancelRequest(){
           this.socket.removeAllListeners('cancelMatchRequest')
      }
-     startMatchTimer(cb:()=>void){
-          this.socket.on('startMatchTimer',cb)
+     
+     matchInfo(cb:(data:any)=>void){
+          this.socket.on('matchInfo',cb)
      }
      movePiece(cb:(data:any)=>void){
           this.socket.on('movePiece',cb)
      }
-     removeStartMatchTimer(){
-          this.socket.removeListener('startMatchTimer')
-     }
      startMatch(cb:(data:any)=>void){
           this.socket.on('startMatch',cb)
+     }
+     matchEnd(cb:(data:any)=>void){
+          this.socket.on('matchEnd',cb)
+     }
+     leftMatch(cb:(data:any)=>void){
+          this.socket.on('leftMatch',cb)
+     }
+     removeMatchEnd(){
+          this.socket.removeListener('matchEnd')
      }
      removeStartMatch(){
           this.socket.removeListener('startMatch')
@@ -59,5 +72,16 @@ class Events {
      removeMovePiece(){
           this.socket.removeListener('movePiece')
      }
+     removeMatchInfo(){
+          this.socket.removeListener('matchInfo')
+     }
+     removePlayerList(){
+          this.socket.removeListener('playerList')
+     }
+     removeLeftMatch(){
+          this.socket.removeListener('leftMatch')
+     }
+
+     
 }
 export default Events
