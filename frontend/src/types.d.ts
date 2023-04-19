@@ -71,4 +71,28 @@ interface IPlayerCard{
      state:string
      isYou?:boolean
      isRequestedForMatch?:boolean
+     handleMatchRequest?:(playerId:string)=>void
+     confirmMatchLeave?:()=>void
+}
+interface IMatchInfo {
+     status:string
+     players:{
+          player1:IPlayer|null
+          player2:IPlayer|null
+     }
+}
+interface IPlayerList {
+     players:IPlayer[],
+     you:IPlayer|null,
+     setDialogBoxState:React.Dispatch<React.SetStateAction<boolean>>
+     matchInfo:IMatchInfo
+     setMatchInfo:React.Dispatch<React.SetStateAction<IMatchInfo>>
+     setIsGameStarted:React.Dispatch<React.SetStateAction<boolean>>
+     isGameStarted:boolean
+     isResetMatchState:boolean
+     setIsResetMatchState:React.Dispatch<React.SetStateAction<boolean>>
+     setPlayAgain:React.Dispatch<React.SetStateAction<boolean>>
+     playAgain:boolean
+     newOpponent:string
+     setNewOpponent:React.Dispatch<React.SetStateAction<string>>
 }
